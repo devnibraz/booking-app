@@ -6,6 +6,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
 from .models import Booking
 from .serializers import RegisterSerializer, BookingSerializer
 
@@ -15,9 +16,9 @@ from .serializers import RegisterSerializer, BookingSerializer
 @permission_classes([IsAuthenticated])
 def current_user(request):
     user = request.user
-    return Response({"id": user.id, "username": user.username})
+    return Response({"id": user.id, "username": user.username, "email": user.email})
 
-# Register with token
+
 @api_view(['POST'])
 @permission_classes([AllowAny]) 
 def register_user(request):
@@ -28,7 +29,7 @@ def register_user(request):
         return Response({"message": "User registered successfully!", "token": token.key}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# Login with token
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login_user(request):
@@ -43,23 +44,33 @@ def login_user(request):
 
 
 @api_view(['GET'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def booking_list(request):
-    bookings = Booking.objects.all()
+    bookings = Booking.objects.filter(user=request.user)
     serializer = BookingSerializer(bookings, many=True)
     return Response(serializer.data)
 
 @api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated]) 
 def booking_new(request):
     serializer = BookingSerializer(data=request.data)
     if serializer.is_valid():
-        serializer.save()
-        return Response({"message": "Booking created!"}, status=status.HTTP_201_CREATED)
+        serializer.save(user=request.user)
+        return Response({
+            "message": "Booking created successfully!",
+            "data": serializer.data
+        }, status=status.HTTP_201_CREATED)
+    print(serializer.errors)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PUT'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def booking_edit(request, id):
     try:
-        booking = Booking.objects.get(id=id)
+        booking = Booking.objects.get(id=id, user=request.user)
     except Booking.DoesNotExist:
         return Response({"error": "Booking not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -70,9 +81,11 @@ def booking_edit(request, id):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['DELETE'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def booking_delete(request, id):
     try:
-        booking = Booking.objects.get(id=id)
+        booking = Booking.objects.get(id=id, user=request.user)
         booking.delete()
         return Response({"message": "Booking deleted!"})
     except Booking.DoesNotExist:

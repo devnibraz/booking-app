@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
 
-const Login = () => {
+const Login = ({ setUsername }) => {
   const [form, setForm] = useState({ username: "", password: "" });
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
@@ -15,8 +15,19 @@ const Login = () => {
     try {
       const res = await api.post("login/", form);
       localStorage.setItem("token", res.data.token);
-      setMessage(res.data.message);
-      navigate("/"); 
+      localStorage.setItem("user_id", res.data.user_id);
+
+      if (res.data.username) {
+        setUsername(res.data.username);
+      } else {
+        const userRes = await api.get("current-user/", {
+          headers: { Authorization: `Token ${res.data.token}` },
+        });
+        setUsername(userRes.data.username);
+      }
+
+      setMessage("Login successful!");
+      navigate("/");
     } catch (err) {
       setMessage("Invalid credentials!");
       console.log(err.response?.data || err.message);

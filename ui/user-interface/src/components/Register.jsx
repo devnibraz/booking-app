@@ -14,7 +14,8 @@ const Register = () => {
     try {
       const res = await api.post("register/", form);
       localStorage.setItem("token", res.data.token);
-      setMessage(res.data.message);
+      localStorage.setItem("user_id", res.data.user_id);
+      setMessage("Registration successful!");
       navigate("/"); 
     } catch (err) {
       setMessage("Error while registering!");
