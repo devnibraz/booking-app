@@ -20,17 +20,24 @@ def current_user(request):
 
 
 @api_view(['POST'])
+@authentication_classes([])
 @permission_classes([AllowAny]) 
 def register_user(request):
     serializer = RegisterSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
         token, _ = Token.objects.get_or_create(user=user)
-        return Response({"message": "User registered successfully!", "token": token.key}, status=status.HTTP_201_CREATED)
+        return Response({
+            "message": "User registered successfully!",
+            "token": token.key,
+            "user_id": user.id,
+            "username": user.username,
+        }, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
+@authentication_classes([])
 @permission_classes([AllowAny])
 def login_user(request):
     username = request.data.get("username")
@@ -38,7 +45,12 @@ def login_user(request):
     user = authenticate(username=username, password=password)
     if user:
         token, _ = Token.objects.get_or_create(user=user)
-        return Response({"message": "Login successful!", "token": token.key})
+        return Response({
+            "message": "Login successful!",
+            "token": token.key,
+            "user_id": user.id,
+            "username": user.username,
+        })
     else:
         return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
 

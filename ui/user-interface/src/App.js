@@ -87,7 +87,7 @@ const App = () => {
             </ProtectedRoute>
           }
         />
-        <Route path="/register" element={<Register />} />
+        <Route path="/register" element={<Register setUsername={setUsername} />} />
         <Route path="/login" element={<Login setUsername={setUsername} />} />
       </Routes>
     </BrowserRouter>
