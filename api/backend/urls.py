@@ -16,8 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse
+
+def root_status(request):
+    return JsonResponse({
+        "status": "online",
+        "message": "Booking Backend API is running successfully!",
+        "admin": "/admin/",
+        "api_endpoints": "/api/"
+    })
 
 urlpatterns = [
+    path('', root_status),
     path('admin/', admin.site.urls),
     path('api/', include('booking.urls')),  # booking app ke urls yahan include ho rahe hain
 ]
